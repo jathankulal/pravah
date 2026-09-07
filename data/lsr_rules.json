@@ -1,0 +1,56 @@
+[
+  {
+    "rule_id": "LSR-001",
+    "rule_name": "Bypassing Safety Controls",
+    "description": "Obtain authorisation before overriding or disabling safety controls.",
+    "icon": "🛑"
+  },
+  {
+    "rule_id": "LSR-002",
+    "rule_name": "Confined Space",
+    "description": "Obtain authorisation before entering a confined space.",
+    "icon": "🕳️"
+  },
+  {
+    "rule_id": "LSR-003",
+    "rule_name": "Driving",
+    "description": "Follow safe driving rules.",
+    "icon": "🚗"
+  },
+  {
+    "rule_id": "LSR-004",
+    "rule_name": "Energy Isolation",
+    "description": "Verify isolation and zero energy before work begins.",
+    "icon": "🔒"
+  },
+  {
+    "rule_id": "LSR-005",
+    "rule_name": "Hot Work",
+    "description": "Control flammables and ignition sources.",
+    "icon": "🔥"
+  },
+  {
+    "rule_id": "LSR-006",
+    "rule_name": "Line of Fire",
+    "description": "Keep yourself and others out of the line of fire.",
+    "icon": "🎯"
+  },
+  {
+    "rule_id": "LSR-007",
+    "rule_name": "Lifting Operations",
+    "description": "Plan lifting operations and control the area.",
+    "icon": "🏗️"
+  },
+  {
+    "rule_id": "LSR-008",
+    "rule_name": "Work at Height",
+    "description": "Protect yourself against a fall when working at height.",
+    "icon": "🪜"
+  },
+  {
+    "rule_id": "LSR-009",
+    "rule_name": "Work Authorisation",
+    "description": "Work with a valid permit when required.",
+    "icon": "📝"
+  }
+]

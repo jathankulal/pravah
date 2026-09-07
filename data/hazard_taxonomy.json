@@ -1,0 +1,41 @@
+{
+  "hazardous_energy": [
+    "Gravitational (height)",
+    "Gravitational (falling object)",
+    "Chemical (toxic/H2S)",
+    "Chemical (flammable)",
+    "Chemical (corrosive)",
+    "Mechanical (struck-by)",
+    "Mechanical (caught-in)",
+    "Electrical",
+    "Thermal (heat/fire)",
+    "Thermal (cold)",
+    "Pressure (confined gas)",
+    "Pressure (liquid)",
+    "Kinetic (vehicle)",
+    "Radiation",
+    "Biological",
+    "Acoustic/Vibration"
+  ],
+  "barrier_categories": [
+    "Physical containment",
+    "Physical protection (PPE/guards)",
+    "Control systems (alarms/interlocks)",
+    "Active mitigation (fire suppression)",
+    "Administrative controls (procedures/permits)",
+    "Human action"
+  ],
+  "consequence_levels": [
+    "Fatality",
+    "Serious injury",
+    "Lost-time injury",
+    "Medical treatment",
+    "First aid",
+    "Near miss",
+    "No injury",
+    "Environmental major",
+    "Environmental minor",
+    "Asset damage major",
+    "Asset damage minor"
+  ]
+}

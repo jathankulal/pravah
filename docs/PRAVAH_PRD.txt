@@ -1,0 +1,385 @@
+PRD — PRAVAH Causal Risk Intelligence Engine
+
+Version: 1.0 Prepared for: Smart India Hackathon 2026 Problem Statement
+ID: SIH26165 Theme: Smart Automation PS Category: Software Team: Nexora
+
+1.  PRODUCT OVERVIEW
+
+PRAVAH is a Causal Risk Intelligence Engine designed to analyze OIL’s
+Unsafe-Act/Unsafe-Condition (UA/UC), near-miss, and incident reports.
+Its purpose is to move beyond simple text classification and reconstruct
+the underlying risk represented in each report.
+
+The core causal structure is:
+
+Activity → Hazardous Energy → Barrier Failure → Potential Consequence
+
+Using this structure, PRAVAH supports three critical safety decisions: •
+SIF Potential • Life-Saving Rule (LSR) • Recurring Precursor Pattern
+
+The product connects differently worded reports that describe the same
+underlying failure mode and prioritizes where HSE action matters most
+using exposure-weighted SIF density. It also incorporates
+human-in-the-loop feedback so expert reviews can continuously calibrate
+the system for real-world deployment.
+
+2.  PROBLEM STATEMENT
+
+Safety organizations receive large volumes of free-text UA/UC,
+near-miss, and incident reports. Important risk signals may be hidden
+within varied language, scattered observations, and reports that
+describe similar failures using different words.
+
+The key product problem is therefore not only understanding what a
+report says, but identifying the risk structure behind it and surfacing
+actionable patterns.
+
+PRAVAH addresses: • Hidden high-consequence potential that may not be
+reflected by reported severity. • Recurring barrier failures that are
+difficult to see across differently worded reports. • Risk concentration
+that may be obscured by high report volume alone. • Manual screening
+effort required to identify the most important reports. • The need for
+explainable AI outputs that HSE decision-makers can validate.
+
+3.  PRODUCT VISION
+
+Turn existing safety reports into structured, explainable causal risk
+intelligence without disrupting the organization’s existing reporting
+workflow.
+
+4.  PRODUCT GOALS
+
+Primary goals: 1. Reconstruct causal risk from free-text safety reports.
+2. Identify potential Serious Injury & Fatality (SIF) exposure. 3. Link
+reports to relevant Life-Saving Rules. 4. Detect recurring precursor and
+barrier-failure patterns. 5. Prioritize HSE attention using risk-focused
+signals rather than report volume alone. 6. Provide causal evidence
+behind every important AI-generated flag. 7. Improve performance through
+expert review and feedback. 8. Integrate with the existing UA/UC,
+near-miss, and incident reporting workflow.
+
+5.  NON-GOALS
+
+The provided product concept does not specify: • Replacing OIL’s
+existing reporting process. • Creating a parallel reporting workflow. •
+Fully autonomous safety decision-making without expert validation. •
+Requiring paid AI services. • Requiring a new data-collection system.
+
+6.  TARGET USERS
+
+Field Personnel Need: Continue reporting incidents and observations
+without additional workflow burden. Value: Existing reporting remains
+unchanged while earlier risk signals can trigger preventive action.
+
+HSE Officers Need: Screen reports and identify high-priority risks
+efficiently. Value: Causal reconstruction and prioritization support
+evidence-backed intervention.
+
+Site Leadership Need: Understand recurring safety weaknesses at site
+level. Value: Recurring barrier failures become visible before
+escalation.
+
+OIL Management Need: Consistent risk prioritization across sites. Value:
+Shared risk intelligence supports organization-wide safety decisions.
+
+HSE Decision-Makers Need: Trust and validate AI-generated flags. Value:
+Each flag carries causal evidence that can be reviewed and acted upon.
+
+7.  CORE USER JOURNEYS
+
+Journey A — Report to Risk 1. A UA/UC, near-miss, or incident report
+enters PRAVAH. 2. NLP processing extracts relevant concepts from the
+free text. 3. The system reconstructs the causal risk structure. 4.
+Deterministic logic evaluates SIF potential and LSR relevance. 5. The
+report is assessed for recurring precursor patterns. 6. PRAVAH generates
+an explainable risk output. 7. HSE personnel review the result and take
+appropriate action.
+
+Journey B — Recurring Failure Detection 1. Multiple reports are
+processed. 2. Semantically similar reports are connected even when
+wording differs. 3. Common failure modes and precursor patterns are
+surfaced. 4. HSE users can identify recurring barrier failures. 5.
+Leadership can focus preventive interventions on recurring risks.
+
+Journey C — Expert Feedback 1. An HSE expert reviews an AI-generated
+output. 2. The expert validates or corrects the
+classification/reasoning. 3. The correction becomes human-in-the-loop
+feedback. 4. The shared engine uses feedback to improve future
+performance.
+
+8.  FUNCTIONAL REQUIREMENTS
+
+FR-01: Safety Report Ingestion PRAVAH shall accept existing UA/UC
+observations, near-miss reports, and incident reports as input.
+
+FR-02: NLP Processing The system shall process free-text reports using
+NLP techniques to identify relevant safety concepts and relationships.
+
+FR-03: Causal Reconstruction The system shall represent report
+information through the causal structure: Activity → Hazardous Energy →
+Barrier Failure → Potential Consequence.
+
+FR-04: SIF Potential Detection The system shall assess whether a report
+contains potential Serious Injury & Fatality risk, including cases where
+reported severity does not fully represent the potential consequence.
+
+FR-05: Life-Saving Rule Mapping The system shall identify relevant IOGP
+Life-Saving Rules and connect detected hazards/barrier failures to
+applicable rules.
+
+FR-06: Recurring Precursor Detection The system shall identify recurring
+precursor patterns across reports.
+
+FR-07: Semantic Failure Matching The system shall connect differently
+worded reports when they represent the same underlying failure mode.
+
+FR-08: Exposure-Weighted Prioritization The system shall support
+exposure-weighted SIF density so that HSE teams can prioritize
+concentrated fatal-potential risk rather than simply prioritizing
+locations with more reports.
+
+FR-09: Explainable Outputs Each significant flag should provide causal
+evidence showing why the system identified the risk.
+
+FR-10: Human-in-the-Loop Feedback The system shall allow expert
+review/correction and use that feedback to calibrate the system.
+
+FR-11: Existing Workflow Compatibility The system shall operate on the
+organization’s existing safety reports without requiring a parallel
+reporting process.
+
+9.  PRODUCT OUTPUTS
+
+For each analyzed report, the intended intelligence includes: •
+Reconstructed activity. • Hazardous energy. • Identified or suspected
+barrier failure. • Potential consequence. • SIF potential assessment. •
+Relevant Life-Saving Rule. • Recurring precursor/failure pattern where
+applicable. • Evidence supporting the generated flags. • Expert
+review/correction status.
+
+At an aggregated level, the system should surface: • Recurring failure
+modes. • Recurring precursors. • Risk hotspots. • Barrier failures. •
+Exposure-weighted SIF density.
+
+10. AI/ML AND REASONING APPROACH
+
+The proposed technical approach uses: • Hugging Face Transformers •
+spaCy • Sentence-Transformers • scikit-learn
+
+Semantic similarity can support identification of reports describing the
+same underlying failure despite differences in wording.
+
+Causal reasoning is supported through: • Rule Engine • Deterministic
+Scoring • SIF Logic • Life-Saving Rule Logic
+
+The product concept emphasizes a causal engine rather than relying only
+on text similarity or classification.
+
+11. TECHNOLOGY STACK
+
+Frontend: • Streamlit
+
+Backend: • Python • FastAPI • Pydantic • Uvicorn
+
+AI/ML & NLP: • Hugging Face Transformers • spaCy • Sentence-Transformers
+• scikit-learn
+
+Causal Reasoning: • Rule Engine • Deterministic Scoring • SIF/LSR Logic
+
+Data & Knowledge: • SQLite • JSON • IOGP Life-Saving Rules • DEKRA/EEI
+Taxonomy
+
+API & Services: • REST API • OpenAPI
+
+Cloud & Deployment: • GitHub • Local Deployment • Streamlit Community
+Cloud
+
+12. DATA REQUIREMENTS
+
+Primary input: • OIL UA/UC observations. • OIL near-miss reports. • OIL
+incident reports.
+
+Knowledge sources specified by the product: • IOGP Life-Saving Rules. •
+DEKRA/EEI Taxonomy.
+
+The feasibility concept explicitly states that no new data is required
+and that existing HSSE reports are sufficient.
+
+13. USER EXPERIENCE REQUIREMENTS
+
+The product should: • Preserve the existing reporting workflow for field
+personnel. • Present risk outputs in a clear, actionable format. • Make
+causal evidence visible alongside AI decisions. • Make expert review
+straightforward. • Surface recurring patterns rather than forcing users
+to manually compare reports. • Help HSE teams prioritize action rather
+than simply browse reports.
+
+14. FEASIBILITY AND VIABILITY
+
+Feasibility principles: • One core causal structure supports three
+critical decisions. • Existing HSSE reports are sufficient. • The core
+can use open-source AI technologies, with optional APIs. • The
+architecture is intended to scale from site-level deployment to
+enterprise rollout.
+
+Viability principles: • Convert reports into risk prioritization before
+escalation. • Focus on underlying structure rather than wording. •
+Preserve the existing workflow. • Use shared-engine feedback so one
+expert correction can improve multiple decisions.
+
+15. SAFETY AND TRUST REQUIREMENTS
+
+Because PRAVAH supports safety-related decisions, outputs should be
+treated as decision support rather than unquestionable autonomous
+decisions.
+
+The product should: • Show the causal evidence behind flags. • Allow
+expert validation and correction. • Preserve a human-in-the-loop review
+mechanism. • Use deterministic scoring/rules where specified for
+critical logic. • Make it clear when an output represents potential risk
+rather than confirmed consequence.
+
+16. SUCCESS METRICS
+
+The source material does not specify numeric KPIs. The following are
+therefore proposed product-level metrics derived from the stated
+objectives:
+
+Detection: • Precision/recall of SIF-potential identification. •
+Accuracy of LSR mapping. • Accuracy of recurring precursor detection.
+
+Operational: • Reduction in manual report-screening effort. • Time
+required to identify high-priority reports. • Percentage of reports
+receiving useful causal structure.
+
+Pattern discovery: • Number/percentage of recurring failure modes
+surfaced. • Number of actionable risk hotspots identified.
+
+Human-in-the-loop: • Expert agreement rate with system outputs. •
+Correction rate over time. • Improvement in model/rule performance after
+expert feedback.
+
+17. RISKS AND MITIGATIONS
+
+Risk: AI produces an incorrect safety interpretation. Mitigation:
+Human-in-the-loop expert review and explainable causal evidence.
+
+Risk: Different reports are incorrectly grouped together. Mitigation:
+Combine semantic similarity with structured causal reasoning and
+deterministic rules.
+
+Risk: High reporting volume is mistaken for high risk. Mitigation: Use
+exposure-weighted SIF density and causal risk signals.
+
+Risk: Users reject the system because it changes their reporting
+process. Mitigation: Keep existing reporting workflows unchanged.
+
+Risk: Lack of sufficient data. Mitigation: Product concept is designed
+around existing HSSE reports and does not require new data collection.
+
+Risk: Deployment cost becomes high. Mitigation: Use an open-source core
+with optional APIs.
+
+18. DEPLOYMENT AND SCALABILITY
+
+The proposed deployment supports: • Local deployment. • Streamlit
+Community Cloud. • GitHub-based development/deployment.
+
+The intended scaling path is: Site → Enterprise rollout
+
+The architecture should keep the causal engine reusable across
+deployments so that the same reasoning structure can support consistent
+risk prioritization across sites.
+
+19. MVP SCOPE
+
+The Minimum Viable Product should include:
+
+1.  Report input for UA/UC, near-miss, and incident text.
+
+2.  NLP-based extraction of safety concepts.
+
+3.  Causal reconstruction into Activity → Hazardous Energy → Barrier
+    Failure → Potential Consequence.
+
+4.  SIF potential assessment.
+
+5.  Life-Saving Rule mapping.
+
+6.  Semantic grouping of similar failure modes.
+
+7.  Recurring precursor detection.
+
+8.  Explainable evidence for generated decisions.
+
+9.  Basic HSE review/correction mechanism.
+
+10. Risk-oriented report prioritization.
+
+11. FUTURE EXTENSIONS
+
+The provided concept establishes the product’s site-to-enterprise
+scalability, but does not specify a detailed future roadmap. Potential
+extensions should therefore be defined after validating the MVP with OIL
+stakeholders and real reports.
+
+21. BUSINESS AND OPERATIONAL VALUE
+
+PRAVAH aims to create value across five areas:
+
+Safety: • Detect hidden high-consequence potential. • Expose recurring
+barrier failures. • Strengthen preventive safety decisions.
+
+Operational: • Prioritize where HSE acts first. • Reduce manual report
+screening. • Accelerate evidence-based intervention.
+
+Economic: • Prevent costly recurring failures. • Target resources where
+risk concentrates. • Reduce avoidable incident exposure.
+
+Technological: • Convert free text into causal intelligence. • Unify
+SIF, LSR, and precursor decisions. • Learn from human corrections.
+
+Environmental: • Surface precursors to environmental harm. • Enable
+earlier preventive intervention. • Support proactive environmental risk
+control.
+
+22. ACCEPTANCE CRITERIA FOR MVP
+
+The MVP is considered functionally successful when: • A safety report
+can be submitted and processed. • The system generates a causal
+representation. • SIF potential and LSR decisions can be produced. •
+Similar reports can be connected based on underlying failure patterns. •
+Recurring precursor patterns can be surfaced. • Each major decision
+includes supporting causal evidence. • An HSE reviewer can
+validate/correct the output. • The workflow does not require users to
+replace their existing reporting process.
+
+23. REFERENCES / FOUNDATIONAL FRAMEWORKS
+
+The product source identifies: • IOGP — Life-Saving Rules: framework for
+critical hazard/control mapping. • OSHA — Leading Indicators: proactive
+indicators for identifying potential problems early. • Constructs of
+Leading Indicators: A Synthesis of Safety Literature: research
+foundation for identifying safety precursors and continuous improvement.
+• A Scoping Literature Review of NLP for Application to Safety
+Occurrence Reports: NLP-based analysis of free-text safety reports. •
+DEKRA — Leading Indicators: proactive measurement for early safety
+improvement. • NLP for Industrial Safety Reports: AI-based analysis of
+safety-report patterns.
+
+24. PRODUCT SUMMARY
+
+PRAVAH is positioned as a causal risk intelligence layer over existing
+safety reporting. Instead of treating each report as isolated text, it
+reconstructs the underlying risk, connects differently worded reports to
+common failure modes, and produces three critical decisions: SIF
+potential, Life-Saving Rule relevance, and recurring precursor patterns.
+
+Its central value proposition is:
+
+Existing Reports → Causal Reconstruction → Explainable Risk Intelligence
+→ Prioritized HSE Action
+
+The product is designed around minimal workflow disruption, open-source
+technology, deterministic safety logic, semantic NLP, and continuous
+expert feedback.
