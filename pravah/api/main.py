@@ -16,15 +16,15 @@ class AnalyzeRequest(BaseModel):
     text: str
 
 class AnalyzeResponse(BaseModel):
-    causal_nodes: List[str]
+    causal_nodes: Dict[str, Any]
     sif_potential: str
     sif_score: float
-    lsr_mapped: List[str]
+    lsr_mapped: str
     confidence: float
-    evidence: List[Dict[str, Any]]
+    evidence: List[str]
 
 class FeedbackRequest(BaseModel):
-    report_id: int
+    report_id: str
     reviewer_name: str
     action: str
     notes: Optional[str] = ""

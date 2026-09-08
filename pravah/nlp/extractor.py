@@ -9,15 +9,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Try to load Transformers model for zero-shot classification
+# Check if the transformers package is installed (do NOT load any model here)
 try:
-    from transformers import pipeline
-    # Initialize zero-shot classification pipeline (lazy loading or global)
-    classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+    import transformers  # noqa: F401 — presence check only
     TRANSFORMERS_AVAILABLE = True
-except (ImportError, OSError, Exception) as e:
+except ImportError:
     TRANSFORMERS_AVAILABLE = False
-    logger.warning(f"Transformers pipeline could not be loaded: {e}. Falling back to keyword rules.")
+    logger.warning("Transformers package not installed. Zero-shot classification disabled; using keyword rules.")
+
+# Module-level classifier cache — populated on first use by get_zero_shot_classifier()
+classifier = None
 
 # Try to load spaCy model, but gracefully fallback to simple keyword extraction if missing
 try:
@@ -48,29 +49,46 @@ def extract_causal_nodes_with_keywords(text: str) -> dict:
     }
     
     # Basic keyword-based extraction for MVP
-    # Activity
+    # Activity + initial energy assignment
     if "scaffold" in text_lower or "height" in text_lower:
         nodes["activity"] = "Work at height"
-        nodes["hazardous_energy"] = "Gravitational"
+        nodes["hazardous_energy"] = "Gravitational (height)"
     elif "confined space" in text_lower or "tank entry" in text_lower or "vessel entry" in text_lower:
         nodes["activity"] = "Confined space entry"
     elif "lifting" in text_lower or "crane" in text_lower:
         nodes["activity"] = "Lifting operations"
-        nodes["hazardous_energy"] = "Mechanical"
+        # Default struck-by for lifting; caught-in if entanglement evidence is present
+        if any(kw in text_lower for kw in ("entangle", "caught", "caught-in", "pinch", "crush", "nip")):
+            nodes["hazardous_energy"] = "Mechanical (caught-in)"
+        else:
+            nodes["hazardous_energy"] = "Mechanical (struck-by)"
     elif "weld" in text_lower or "grind" in text_lower or "cutting" in text_lower:
         nodes["activity"] = "Hot work"
-        nodes["hazardous_energy"] = "Thermal"
-        
-    # Energy overrides
+        nodes["hazardous_energy"] = "Thermal (heat/fire)"
+
+    # Energy overrides — evaluated after activity block so they always take precedence
     if "h2s" in text_lower or "toxic" in text_lower or "gas test" in text_lower:
-        nodes["hazardous_energy"] = "Chemical (toxic)"
+        nodes["hazardous_energy"] = "Chemical (toxic/H2S)"
     elif "electrical" in text_lower or "shock" in text_lower or "415v" in text_lower:
         nodes["hazardous_energy"] = "Electrical"
     elif "pressure" in text_lower or "bar " in text_lower:
-        nodes["hazardous_energy"] = "Pressure"
+        nodes["hazardous_energy"] = "Pressure (confined gas)"
+    elif any(kw in text_lower for kw in ("entangle", "caught-in", "pinch point", "pinch-point", "crushing")):
+        # Standalone caught-in detection (not inside a lifting block)
+        nodes["hazardous_energy"] = "Mechanical (caught-in)"
         
     # Barrier Failure
-    if "no harness" in text_lower or "no fall arrest" in text_lower:
+    _fall_protection_absent = (
+        "no harness" in text_lower
+        or "no fall arrest" in text_lower
+        or "without a harness" in text_lower
+        or "without fall protection" in text_lower
+        or "without harness" in text_lower
+        or "no ppe" in text_lower
+        or "no safety harness" in text_lower
+        or "without safety harness" in text_lower
+    )
+    if _fall_protection_absent:
         nodes["barrier_failure"] = "Missing fall protection"
     elif "gas test" in text_lower and ("old" in text_lower or "expired" in text_lower):
         nodes["barrier_failure"] = "Invalid gas test"
@@ -91,26 +109,64 @@ def extract_causal_nodes_with_keywords(text: str) -> dict:
          
     return nodes
 
+def get_zero_shot_classifier():
+    """
+    Returns the zero-shot classification pipeline, initializing it on first call.
+    The 1.63 GB facebook/bart-large-mnli model is only loaded when this function
+    is actually invoked — never at import time.
+
+    Returns None if the model cannot be loaded, so callers can fall back gracefully.
+    """
+    global classifier
+    if classifier is not None:
+        return classifier
+    try:
+        from transformers import pipeline
+        logger.info("Lazy-loading zero-shot classifier (facebook/bart-large-mnli)...")
+        classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+        logger.info("Zero-shot classifier loaded successfully.")
+        return classifier
+    except Exception as e:
+        logger.warning(f"Failed to load transformer model: {e}. Will use keyword fallback.")
+        return None
+
+
 def extract_causal_nodes_with_transformers(text: str) -> dict:
     """
     Uses Hugging Face zero-shot classifier + keyword rules.
-    Falls back to keywords if transformers unavailable.
+    Falls back to keywords if transformers package is unavailable or model
+    fails to load at runtime.
     """
     if not TRANSFORMERS_AVAILABLE:
-        logger.info("Using keyword extraction method (Transformers unavailable).")
+        logger.info("Using keyword extraction (Transformers package not installed).")
+        return extract_causal_nodes_with_keywords(text)
+
+    clf = get_zero_shot_classifier()
+    if clf is None:
+        logger.info("Using keyword extraction (classifier unavailable at runtime).")
         return extract_causal_nodes_with_keywords(text)
 
     activities = ["Work at height", "Confined space entry", "Lifting operations", "Hot work", "Energy isolation"]
-    energies = ["Gravitational", "Chemical (toxic)", "Electrical", "Thermal", "Pressure", "Mechanical"]
+    energies = [
+        "Gravitational (height)",
+        "Chemical (toxic/H2S)",
+        "Chemical (flammable)",
+        "Mechanical (struck-by)",
+        "Mechanical (caught-in)",
+        "Electrical",
+        "Thermal (heat/fire)",
+        "Pressure (confined gas)",
+        "Kinetic (vehicle)",
+    ]
     barriers = ["Missing fall protection", "Invalid gas test", "Permit non-compliance", "Safety control bypassed", "LOTO failure"]
     consequences = ["Fatality", "Serious injury", "Lost-time injury", "Near miss"]
-    
+
     try:
-        # Use zero-shot pipeline for each category
-        activity_res = classifier(text, activities)
-        energy_res = classifier(text, energies)
-        barrier_res = classifier(text, barriers)
-        consequence_res = classifier(text, consequences)
+        # Use zero-shot pipeline for each causal category
+        activity_res = clf(text, activities)
+        energy_res = clf(text, energies)
+        barrier_res = clf(text, barriers)
+        consequence_res = clf(text, consequences)
 
         # Extract top predictions
         nodes = {
@@ -125,7 +181,7 @@ def extract_causal_nodes_with_transformers(text: str) -> dict:
                 "potential_consequence": float(consequence_res['scores'][0]),
             }
         }
-        logger.info("Using transformer extraction method.")
+        logger.info("Transformer extraction completed successfully.")
         return nodes
     except Exception as e:
         logger.warning(f"Transformer extraction failed: {e}. Falling back to keywords.")
