@@ -4,6 +4,7 @@ PRAVAH — Streamlit Entry Point
 
 import streamlit as st
 import logging
+import requests
 from pravah.ui.shell import render_shell
 from pravah.ui.styles import inject_custom_css
 from pravah.database.seed import seed_database
@@ -12,6 +13,20 @@ from pravah.config import DB_PATH
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+
+def call_api_analyze(report_text: str):
+    """Calls FastAPI /analyze endpoint"""
+    try:
+        response = requests.post(
+            "http://localhost:8000/analyze",
+            json={"text": report_text},
+            timeout=30
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"API Error: {e}")
+        return None
 
 # Page configuration
 st.set_page_config(
@@ -28,6 +43,8 @@ inject_custom_css()
 if not Path(DB_PATH).exists():
     with st.spinner("Initializing Database..."):
         seed_database()
+
+st.info("Make sure FastAPI is running on localhost:8000")
 
 # Initialize session state for navigation
 if "current_page" not in st.session_state:

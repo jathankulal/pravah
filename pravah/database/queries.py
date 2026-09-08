@@ -198,3 +198,58 @@ def update_review_status(report_id, new_status, reviewer_name="Expert User", not
     conn.commit()
     conn.close()
     return True
+
+def insert_report(report_data: dict):
+    """Insert a new report into the database."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    query = """
+        INSERT INTO reports (
+            report_id, site, report_type, date, reported_by, description, 
+            severity_reported, people_exposed, exposure_frequency, 
+            exposure_duration_hrs, exposure_index, activity_extracted, 
+            hazardous_energy, barrier_failure, potential_consequence, 
+            sif_potential, sif_score, lsr_mapped, confidence, review_status, evidence
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    """
+    
+    # Calculate exposure index if missing
+    exposure_index = report_data.get('exposure_index')
+    if exposure_index is None:
+        freq_map = {'Rare': 1, 'Occasional': 2, 'Frequent': 3, 'Continuous': 4}
+        freq_val = freq_map.get(report_data.get('exposure_frequency', 'Occasional'), 2)
+        people = float(report_data.get('people_exposed', 1))
+        duration = float(report_data.get('exposure_duration_hrs', 1.0))
+        exposure_index = people * freq_val * duration
+        
+    params = (
+        report_data.get('report_id', str(hash(report_data.get('description', '')))),
+        report_data.get('site', 'Unknown Site'),
+        report_data.get('report_type', 'Incident'),
+        report_data.get('date', '2026-01-01'),
+        report_data.get('reported_by', 'System Upload'),
+        report_data.get('description', ''),
+        report_data.get('severity_reported', 'Low'),
+        report_data.get('people_exposed', 1),
+        report_data.get('exposure_frequency', 'Occasional'),
+        report_data.get('exposure_duration_hrs', 1.0),
+        exposure_index,
+        report_data.get('activity_extracted', ''),
+        report_data.get('hazardous_energy', ''),
+        report_data.get('barrier_failure', ''),
+        report_data.get('potential_consequence', ''),
+        report_data.get('sif_potential', 'Low'),
+        report_data.get('sif_score', 0.0),
+        json.dumps(report_data.get('lsr_mapped', [])), # Store as JSON string or string
+        report_data.get('confidence', 0.0),
+        report_data.get('review_status', 'Pending'),
+        json.dumps(report_data.get('evidence', []))
+    )
+    
+    cursor.execute(query, params)
+    conn.commit()
+    conn.close()
+    return True
