@@ -41,13 +41,26 @@ def calculate_sif_potential(energy_type: str, barrier_failure: str, consequence:
     
     # 3. Consequence Weight
     cons_lower = consequence.lower() if consequence else ""
-    if "fatal" in cons_lower:
+    
+    _fatality_kws = ("fatal", "death", "died", "killed")
+    _serious_kws = (
+        "serious injury", "severe injury", "permanent injury",
+        "hospitali", "fracture", "severe burn", "flash fire",
+        "explosion", "collapse", "unconscious", "serious exposure",
+        "crushing", "burn", "amputation"
+    )
+    _lti_kws = (
+        "lost-time", "lost time", "lti", "struck-by", "caught-in",
+        "laceration", "injury"
+    )
+    
+    if any(kw in cons_lower for kw in _fatality_kws):
         cons_weight = CONSEQUENCE_SEVERITY["Fatality"]
         cat = "Fatality"
-    elif "serious injury" in cons_lower or "burn" in cons_lower or "amputation" in cons_lower:
+    elif any(kw in cons_lower for kw in _serious_kws):
         cons_weight = CONSEQUENCE_SEVERITY["Serious injury"]
         cat = "Serious injury"
-    elif "lost-time" in cons_lower or "lti" in cons_lower:
+    elif any(kw in cons_lower for kw in _lti_kws):
         cons_weight = CONSEQUENCE_SEVERITY["Lost-time injury"]
         cat = "Lost-time injury"
     else:

@@ -98,15 +98,90 @@ def extract_causal_nodes_with_keywords(text: str) -> dict:
         nodes["barrier_failure"] = "Safety control bypassed"
     elif "lockout" in text_lower or "loto" in text_lower:
         nodes["barrier_failure"] = "LOTO failure"
+        # LOTO implies energy isolation activity — ensures LSR maps correctly
+        if nodes["activity"] == "Unknown activity":
+            nodes["activity"] = "Energy isolation"
+    elif nodes["hazardous_energy"] == "Mechanical (caught-in)":
+        # Caught-in/between events imply absent machine guarding as the primary barrier.
+        # Setting this explicitly prevents the transformer hallucinating an unrelated barrier
+        # (e.g. "Safety control bypassed") which would misroute the LSR mapping.
+        nodes["barrier_failure"] = "Missing machine guarding"
         
-    # Consequence
-    if "fatal" in text_lower or "death" in text_lower:
+    # Consequence — deterministic keyword extraction.
+    # Strategy:
+    #   1. Strip negated/hypothetical phrases from eval_text first.
+    #   2. Match fatality > serious > LTI keywords in priority order.
+    #   3. Use has_negation guard only for the weak generic fallbacks.
+
+    # Phrases that negate a consequence — these are stripped so their constituent
+    # words (e.g. "injury") do not falsely trigger a consequence match.
+    _negation_phrases = (
+        "no injury", "no injuries", "no exposure", "without injury",
+        "not injured", "no harm", "near miss",
+        "potential for serious injury", "potential serious injury",
+        "potential for injury", "no serious injury",
+    )
+    has_negation = any(neg in text_lower for neg in _negation_phrases)
+
+    # Build a cleaned evaluation string by stripping all negation phrases.
+    eval_text = text_lower
+    for phrase in _negation_phrases:
+        eval_text = eval_text.replace(phrase, " ")
+
+    # Fatality indicators — explicit death/fatality language.
+    _fatality_kws = (
+        "fatal", "fatality", "death", "died", "killed",
+    )
+
+    # Serious injury — TIER 1: explicit direct human harm words.
+    # These always fire regardless of negation context because they describe
+    # confirmed human consequences (e.g. "hospitalized" unambiguously means harm).
+    # NOTE: event/energy words like "fell", "struck by", "caught-in" are intentionally
+    # excluded — those describe the energy release, not the consequence outcome.
+    _serious_tier1 = (
+        "serious injury", "severe injury", "permanent injury",
+        "hospitalized", "hospitalised", "hospitalization", "hospitalisation",
+        "fracture", "fractured",
+        "amputation", "amputated",
+        "unconscious", "unconsciousness", "lost consciousness",
+        "serious exposure",
+        "severe burn",
+        "crushing", "crushed",
+    )
+
+    # Serious injury — TIER 2: high-energy event words that imply a severe
+    # consequence only when no negation/near-miss language is present.
+    # "scaffold collapsed. near miss, no injury" → has_negation=True → suppressed.
+    # "welding sparks caused a flash fire"       → has_negation=False → fires.
+    _serious_tier2 = (
+        "flash fire", "explosion", "exploded",
+        "collapse", "collapsed",
+    )
+
+    # Lost-time injury indicators — explicit LTI language only.
+    # "fell", "fall", "drop" are NOT included: these describe the gravitational
+    # energy event, not a confirmed injury outcome.
+    _lti_kws = ("lost-time", "lost time", "lti")
+
+    if any(kw in eval_text for kw in _fatality_kws):
         nodes["potential_consequence"] = "Fatality"
-    elif "injury" in text_lower or "burn" in text_lower or "laceration" in text_lower:
+    elif any(kw in eval_text for kw in _serious_tier1):
         nodes["potential_consequence"] = "Serious injury"
-    elif "drop" in text_lower or "fall" in text_lower:
-         nodes["potential_consequence"] = "Lost-time injury"
-         
+    elif not has_negation and any(kw in eval_text for kw in _serious_tier2):
+        # Event-type indicators — only valid without explicit negation
+        nodes["potential_consequence"] = "Serious injury"
+    elif not has_negation and any(kw in eval_text for kw in ("burn", "injury", "laceration")):
+        nodes["potential_consequence"] = "Serious injury"
+    elif any(kw in eval_text for kw in _lti_kws):
+        nodes["potential_consequence"] = "Lost-time injury"
+    # Deliberately no fallback for "fell"/"fall"/"drop" — these are energy
+    # event words, not consequence words. Consequence stays Unknown unless
+    # explicit injury language is present.
+
+    # Expose negation flag so the transformer merge block can guard against
+    # TF escalating negated/hypothetical language to actual severe consequences.
+    nodes["_has_negation"] = has_negation
+
     return nodes
 
 def get_zero_shot_classifier():
@@ -181,6 +256,26 @@ def extract_causal_nodes_with_transformers(text: str) -> dict:
                 "potential_consequence": float(consequence_res['scores'][0]),
             }
         }
+        
+        kw_nodes = extract_causal_nodes_with_keywords(text)
+        # Domain keyword rules take priority for all four fields when they produce
+        # a specific (non-Unknown) result. This prevents transformer hallucinations
+        # on short/ambiguous texts from overriding well-defined domain signals.
+        if kw_nodes["activity"] != "Unknown activity":
+            nodes["activity"] = kw_nodes["activity"]
+        if kw_nodes["hazardous_energy"] != "Unknown":
+            nodes["hazardous_energy"] = kw_nodes["hazardous_energy"]
+        if kw_nodes["barrier_failure"] != "Unknown":
+            nodes["barrier_failure"] = kw_nodes["barrier_failure"]
+        # Consequence: keyword result always wins when it has a specific value;
+        # this ensures consequence-rich report language overrides generic TF output.
+        if kw_nodes["potential_consequence"] != "Unknown":
+            nodes["potential_consequence"] = kw_nodes["potential_consequence"]
+        elif kw_nodes.get("_has_negation"):
+            # Keyword extractor found explicit negation language but no real consequence.
+            # Do not let the transformer escalate a negated/hypothetical to Serious/Fatality.
+            nodes["potential_consequence"] = "Near miss"
+            
         logger.info("Transformer extraction completed successfully.")
         return nodes
     except Exception as e:
