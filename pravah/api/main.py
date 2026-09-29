@@ -43,7 +43,7 @@ async def analyze_report(request: AnalyzeRequest) -> AnalyzeResponse:
     Analyzes a report text and returns causal nodes, SIF metrics, and LSR mapping.
     """
     try:
-        logger.info(f"Analyzing report text: {request.text[:50]}...")
+        logger.info("Received analysis request for a report.")
         result = process_report(request.text)
         return AnalyzeResponse(**result)
     except Exception as e:

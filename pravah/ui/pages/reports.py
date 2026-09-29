@@ -8,20 +8,22 @@ import pandas as pd
 import json
 import uuid
 import requests
+import logging
 from pravah.database.queries import get_all_reports, insert_report
-from pravah.config import COLORS
+from pravah.config import COLORS, API_URL
 
 def call_api_analyze_local(report_text: str):
     """Calls FastAPI /analyze endpoint"""
     try:
         response = requests.post(
-            "http://localhost:8000/analyze",
+            f"{API_URL.rstrip('/')}/analyze",
             json={"text": report_text},
             timeout=30
         )
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
+        logging.error(f"Batch API connection failed: {e}")
         return None
 
 def render_page(site: str):
@@ -105,7 +107,8 @@ def render_page(site: str):
                 
                 st.markdown("---")
         except Exception as e:
-            st.error(f"Error processing file: {str(e)}")
+            logging.error(f"File upload processing error: {e}")
+            st.error("Error processing file. Please ensure it is a valid CSV or JSON with a 'description' column.")
             
     # Filters
     col1, col2, col3, col4 = st.columns(4)

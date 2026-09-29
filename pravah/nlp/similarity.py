@@ -9,17 +9,11 @@ from pravah.nlp.embedder import get_embedding, get_embeddings_batch
 
 logger = logging.getLogger(__name__)
 
-try:
-    from sklearn.metrics.pairwise import cosine_similarity
-    from sklearn.cluster import AgglomerativeClustering
-    SKLEARN_AVAILABLE = True
-except ImportError:
-    SKLEARN_AVAILABLE = False
-    logger.warning("scikit-learn not installed. Clustering will be disabled.")
-
 def calculate_similarity(text1: str, text2: str) -> float:
     """Calculate cosine similarity between two texts."""
-    if not SKLEARN_AVAILABLE:
+    try:
+        from sklearn.metrics.pairwise import cosine_similarity
+    except ImportError:
         return 0.0
         
     emb1 = get_embedding(text1)
@@ -38,7 +32,12 @@ def cluster_reports(reports: list) -> dict:
     cluster them based on semantic similarity of their descriptions.
     Returns a dict mapping report_id -> cluster_id.
     """
-    if not SKLEARN_AVAILABLE or not reports:
+    if not reports:
+        return {}
+    
+    try:
+        from sklearn.cluster import AgglomerativeClustering
+    except ImportError:
         return {}
         
     descriptions = [r.get('description', '') for r in reports]

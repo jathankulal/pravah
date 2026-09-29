@@ -12,6 +12,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 DB_PATH = os.environ.get("DB_PATH", str(DATA_DIR / "pravah.db"))
 
+# ── Network / API ──────────────────────────────────────────────────────────────
+API_URL = os.environ.get("PRAVAH_API_URL", "http://localhost:8000")
+
 # ── Exposure ───────────────────────────────────────────────────────────────────
 EXPOSURE_FREQUENCY_WEIGHTS = {
     "Continuous": 1.0,
@@ -135,6 +138,7 @@ TABLE_ROW_HEIGHT_PX = 46
 
 # ── Navigation Pages ──────────────────────────────────────────────────────────
 NAV_PAGES = [
+    {"label": "Home", "icon": "🏠", "key": "home"},
     {"label": "Overview", "icon": "📊", "key": "overview"},
     {"label": "Reports", "icon": "📋", "key": "reports"},
     {"label": "Causal Analysis", "icon": "🔗", "key": "causal_detail"},

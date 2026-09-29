@@ -63,7 +63,10 @@ def render_shell():
     site = st.session_state.selected_site
     
     # Import pages dynamically to avoid circular imports
-    if page_key == "overview":
+    if page_key == "home":
+        from pravah.ui.pages.home import render_page
+        render_page(site)
+    elif page_key == "overview":
         from pravah.ui.pages.overview import render_page
         render_page(site)
     elif page_key == "reports":

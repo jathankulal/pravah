@@ -4,29 +4,12 @@ Uses Hugging Face Transformers for zero-shot classification,
 with fallback to domain keyword rules to extract causal nodes.
 """
 
-import spacy
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Check if the transformers package is installed (do NOT load any model here)
-try:
-    import transformers  # noqa: F401 — presence check only
-    TRANSFORMERS_AVAILABLE = True
-except ImportError:
-    TRANSFORMERS_AVAILABLE = False
-    logger.warning("Transformers package not installed. Zero-shot classification disabled; using keyword rules.")
-
 # Module-level classifier cache — populated on first use by get_zero_shot_classifier()
 classifier = None
-
-# Try to load spaCy model, but gracefully fallback to simple keyword extraction if missing
-try:
-    nlp = spacy.load("en_core_web_sm")
-    SPACY_AVAILABLE = True
-except OSError:
-    SPACY_AVAILABLE = False
-    logger.info("spaCy model 'en_core_web_sm' not found.")
 
 def extract_causal_nodes_with_keywords(text: str) -> dict:
     """
@@ -201,6 +184,9 @@ def get_zero_shot_classifier():
         classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
         logger.info("Zero-shot classifier loaded successfully.")
         return classifier
+    except ImportError:
+        logger.warning("Transformers package not installed. Will use keyword fallback.")
+        return None
     except Exception as e:
         logger.warning(f"Failed to load transformer model: {e}. Will use keyword fallback.")
         return None
@@ -212,9 +198,6 @@ def extract_causal_nodes_with_transformers(text: str) -> dict:
     Falls back to keywords if transformers package is unavailable or model
     fails to load at runtime.
     """
-    if not TRANSFORMERS_AVAILABLE:
-        logger.info("Using keyword extraction (Transformers package not installed).")
-        return extract_causal_nodes_with_keywords(text)
 
     clf = get_zero_shot_classifier()
     if clf is None:
