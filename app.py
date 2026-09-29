@@ -5,6 +5,10 @@ PRAVAH — Streamlit Entry Point
 import streamlit as st
 import logging
 import requests
+import threading
+import time
+import uvicorn
+from pravah.api.main import app as fastapi_app
 from pravah.ui.shell import render_shell
 from pravah.ui.styles import inject_custom_css
 from pravah.database.seed import seed_database
@@ -13,6 +17,49 @@ from pravah.config import DB_PATH, API_URL
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+
+# Page configuration MUST be the first Streamlit command
+st.set_page_config(
+    page_title="PRAVAH | Causal Risk Intelligence",
+    page_icon="🛡️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# --- Uvicorn Background Thread Fix ---
+class ThreadSafeServer(uvicorn.Server):
+    def install_signal_handlers(self):
+        pass
+
+@st.cache_resource
+def start_fastapi():
+    def _run_server():
+        config = uvicorn.Config(
+            fastapi_app, 
+            host="127.0.0.1", 
+            port=8000, 
+            log_level="warning"
+        )
+        server = ThreadSafeServer(config)
+        server.run()
+        
+    thread = threading.Thread(target=_run_server, daemon=True)
+    thread.start()
+    
+    for _ in range(20):
+        try:
+            if requests.get("http://127.0.0.1:8000/health", timeout=1).status_code == 200:
+                logging.info("Internal FastAPI backend is ready.")
+                break
+        except requests.exceptions.RequestException:
+            time.sleep(0.5)
+    else:
+        logging.error("FastAPI backend failed to start within 10 seconds.")
+        
+    return thread
+
+start_fastapi()
+
 
 def call_api_analyze(report_text: str):
     """Calls FastAPI /analyze endpoint"""
@@ -28,14 +75,6 @@ def call_api_analyze(report_text: str):
         logging.error(f"API Error: {e}")
         st.error("Failed to connect to the PRAVAH backend. Please ensure the API is running or try again later.")
         return None
-
-# Page configuration
-st.set_page_config(
-    page_title="PRAVAH | Causal Risk Intelligence",
-    page_icon="🛡️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Initialize splash state
 if "splash_shown" not in st.session_state:

@@ -13,7 +13,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 DB_PATH = os.environ.get("DB_PATH", str(DATA_DIR / "pravah.db"))
 
 # ── Network / API ──────────────────────────────────────────────────────────────
-API_URL = os.environ.get("PRAVAH_API_URL", "http://localhost:8000")
+API_URL = os.environ.get("PRAVAH_API_URL", "http://127.0.0.1:8000")
 
 # ── Exposure ───────────────────────────────────────────────────────────────────
 EXPOSURE_FREQUENCY_WEIGHTS = {
